@@ -57,7 +57,6 @@ public class ShopController {
      */
     @PutMapping
     public Result updateShop(@RequestBody Shop shop) {
-
         return shopService.update(shop);
     }
 
