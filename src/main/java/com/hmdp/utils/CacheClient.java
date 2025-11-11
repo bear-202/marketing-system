@@ -16,6 +16,9 @@ import java.util.function.Function;
 import static com.hmdp.utils.RedisConstants.*;
 import static java.time.LocalDateTime.now;
 
+/**
+ * 缓存工具类，处理多种突发情况
+ */
 @Component
 public class CacheClient {
     @Resource
