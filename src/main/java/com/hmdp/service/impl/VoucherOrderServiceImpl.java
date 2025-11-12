@@ -9,28 +9,40 @@ import com.hmdp.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.utils.CacheClient;
 import com.hmdp.utils.RedisIdWorker;
+import com.hmdp.utils.SimpleLock;
 import com.hmdp.utils.UserHolder;
+import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author 虎哥
  * @since 2021-12-22
  */
 @Service
+@Slf4j
 public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
 
     @Resource
     private ISeckillVoucherService iSeckillVoucherService;
     @Resource
     private RedisIdWorker redisIdWorker;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private RedissonClient redissonClient;
+
     @Override
     public Result seckillVoucher(Long voucherId) {
         //查询优惠卷信息
@@ -41,34 +53,60 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             return Result.fail("订单已过期");
         }
         Long userId = UserHolder.getUser().getId();
-        //以每一个用户id作为锁,防止高并发的线程安全问题，由于toString方法每次会创建一个string对象，则使用intern到静态串池里面去拿到同一个用户id
+
+        //单体(采用悲观锁synchronized解决；一人一单问题)
+        /*//以每一个用户id作为锁,防止高并发的线程安全问题，由于toString方法每次会创建一个string对象，则使用intern到静态串池里面去拿到同一个用户id
         synchronized (userId.toString().intern()){
             //spring会为transaction注解修饰的类创建动态代理类,为了使事务生效，用代理类去调用方法
             IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
             return proxy.creatVoucherOrder(voucherId, seckillVoucher);
-        }
+        }*/
 
+        //集群(采用redis内置的nx充当锁解决集群下的一人一单问题)
+        //SimpleLock lock = new SimpleLock(stringRedisTemplate, "order:" + userId);
+
+
+        //使用Redisson框架获取锁
+        RLock lock = redissonClient.getLock("lock:order:" + userId);
+        //尝试获取锁
+        boolean success = lock.tryLock();
+        if (!success) {
+            //获取锁不超过
+            return Result.fail("优惠卷已拥有~");
+        }
+        try {
+            //执行业务流程
+            IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
+            return proxy.creatVoucherOrder(voucherId, seckillVoucher);
+        } finally {
+            //释放锁
+            lock.unlock();
+        }
     }
 
     /**
      * 创建订单数据
+     *
      * @param voucherId
      * @param seckillVoucher
      * @return
      */
+    @Transactional
     public Result creatVoucherOrder(Long voucherId, SeckillVoucher seckillVoucher) {
         Long userId = UserHolder.getUser().getId();
         //实现一人一单
         int count = query().eq("user_id", userId).eq("voucher_id", voucherId).count();
         //判断该用户是否存在订单
-        if(count>0){
+        if (count > 0) {
             //则该用户已经购买过该优惠卷
+            log.info("优惠卷已拥有~");
             return Result.fail("优惠卷已拥有~");
         }
         //未过期 查看库存
         Integer stock = seckillVoucher.getStock();
-        if (stock<1) {
+        if (stock < 1) {
             //库存不足
+            log.info("订单被抢空了~");
             return Result.fail("订单被抢空了~");
         }
         //库存充足，更新库存(采用乐观锁的思想，处理高并发的情况）
