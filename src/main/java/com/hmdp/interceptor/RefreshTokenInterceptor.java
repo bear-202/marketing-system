@@ -31,7 +31,6 @@ public class RefreshTokenInterceptor implements HandlerInterceptor{
         if (token==null) {
             return true;
         }
-        log.info("token：{}验证成功~",token);
         //从redis取出用户信息
         Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries(LOGIN_USER_KEY + token);
         if (userMap.isEmpty()) {
