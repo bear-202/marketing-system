@@ -137,6 +137,12 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     stringRedisTemplate.opsForStream().acknowledge(streamName,"g1",streamMap.getId());
                 } catch (Exception e) {
                     log.error("pending-list处理异常");
+                    e.printStackTrace();
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             }
         }
@@ -178,6 +184,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 .eq("voucher_id", voucherOrder.getVoucherId())
                 .gt("stock", 0)
                 .update();
+        if (!success) {
+            log.error("库存更新异常");
+        }
         //存入订单表
         save(voucherOrder);
     }

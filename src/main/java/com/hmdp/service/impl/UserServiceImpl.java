@@ -73,6 +73,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             user=new User();
             user.setPhone(phone);
             user.setNickName("user"+RandomUtil.randomString(6));
+            user.setIcon("/imgs/icons/user5-icon.png");
             save(user);
         }
         //校验验证码是否正确
