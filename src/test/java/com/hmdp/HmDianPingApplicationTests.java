@@ -16,7 +16,10 @@ class HmDianPingApplicationTests {
     private RedisIdWorker redisIdWorker;
      @Test
     public void testPreSaveCacheInRedis(){
-         shopService.preSaveShopCacheInRedis(1L,200L);
+         for(int i=2;i<=14;i++){
+             shopService.preSaveShopCacheInRedis((long) i,200L);
+         }
+
      }
 
      @Test

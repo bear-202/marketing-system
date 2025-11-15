@@ -5,19 +5,24 @@ import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.ScrollResult;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
+import com.hmdp.entity.Follow;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.BlogMapper;
 import com.hmdp.service.IBlogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hmdp.service.IFollowService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.SystemConstants;
 import com.hmdp.utils.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -38,6 +43,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     private IUserService userService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private IFollowService followService;
 
     //redis的set集合key
     String blogLikeRedisKey="blog:liked:";
@@ -66,18 +73,14 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         Double score = stringRedisTemplate.opsForZSet().score(blogLikeRedisKey + id, userId.toString());
         if (score!=null) {
             //是,则取消点赞,更新数据库和redis
-            log.debug("数据库-1");
             boolean success = update().setSql("liked=liked-1").eq("id", id).update();
-            log.debug("数据库-1");
             if (success) {
                 //取消成功，从redis的sortSet集合移除元素
                 stringRedisTemplate.opsForZSet().remove(blogLikeRedisKey+id,userId.toString());
             }
         }else {
             //否，将该用户添加到redis的blog:liked的set集合 更新数据库和redis
-            log.debug("数据库+1");
             boolean success = update().setSql("liked=liked+1").eq("id", id).update();
-            log.debug("数据库+1");
             if (success) {
                 //添加成功,从redis的sortSet集合添加元素
                 stringRedisTemplate.opsForZSet().add(blogLikeRedisKey+id,userId.toString(),System.currentTimeMillis());
@@ -107,6 +110,29 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     }
 
     @Override
+    public Result saveBlog(Blog blog) {
+        // 获取登录用户
+        UserDTO user = UserHolder.getUser();
+        blog.setUserId(user.getId());
+        // 保存探店博文
+        boolean isSuccess = save(blog);
+        if (!isSuccess) {
+            //存储失败
+            return Result.fail("发布失败~");
+        }
+        //查询作者粉丝
+        List<Follow> follows = followService.query().eq("follow_user_id", blog.getUserId()).list();
+        //将该发布博客日记的作者的粉丝每一个都推送博客id
+        for (Follow follow : follows) {
+            String key="feed:"+follow.getUserId();
+            stringRedisTemplate.opsForZSet().add(key,blog.getId().toString(),System.currentTimeMillis());
+        }
+        return Result.ok(blog.getId());
+    }
+
+
+
+    @Override
     public Result queryBlogById(Long id) {
         //根据Id查询该用户的博客信息
         Blog blog = getById(id);
@@ -117,6 +143,52 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         queryBlogUser(blog);
         isLikedBlog(blog);
         return Result.ok(blog);
+    }
+    @Override
+    public Result queryBlogOfFollow(Long max, Integer offset) {
+        //查询用户id,构建key
+        Long userId = UserHolder.getUser().getId();
+        String key="feed:"+userId;
+
+        //查询该用户的的关注者的发布的博客id,从redis收件箱 ZREVRANGE key max min limit offset count
+        Set<ZSetOperations.TypedTuple<String>> typedTuples = stringRedisTemplate.opsForZSet().
+                reverseRangeByScoreWithScores(key, 0, max, offset, 2);
+        if (typedTuples==null || typedTuples.isEmpty()) {
+            return Result.ok();
+        }
+        //博客id列表最后一个的时间戳
+        long minTime=0L;
+        //等同于offset，表示偏移量，特殊情况：当minTime存在多个时，偏移量随之改变
+        int minTimeCount=1;
+        List<Long> blogIds=new ArrayList<>();
+        for (ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
+            String value = typedTuple.getValue();
+            Long blogId = Long.valueOf(value);
+            blogIds.add(blogId);
+            long l = typedTuple.getScore().longValue();
+            if(l==minTime){
+                minTimeCount++;
+            }else{
+                minTime=l;
+                minTimeCount=1;
+            }
+        }
+        //根据blogIds查询blog信息
+        String idStr = StrUtil.join(",", blogIds);
+        List<Blog> blogList = query().in("id", blogIds).last("order by field (id," + idStr + ")").list();
+        //封装blog
+        for (Blog blog : blogList) {
+            //查询该用户信息,添加进Blog中
+            queryBlogUser(blog);
+            //查询用户是否点赞过该博客
+            isLikedBlog(blog);
+        }
+        //封装ScrollResult
+        ScrollResult scrollResult = new ScrollResult();
+        scrollResult.setList(blogList);
+        scrollResult.setOffset(minTimeCount);
+        scrollResult.setMinTime(minTime);
+        return Result.ok(scrollResult);
     }
     private void isLikedBlog(Blog blog){
         UserDTO user = UserHolder.getUser();

@@ -2,14 +2,20 @@ package com.hmdp.controller;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
 import com.hmdp.service.IShopService;
+import com.hmdp.utils.RedisData;
 import com.hmdp.utils.SystemConstants;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+
+import static com.hmdp.utils.RedisConstants.CACHE_SHOP_KEY;
+import static java.time.LocalDateTime.now;
 
 /**
  * <p>
@@ -25,6 +31,9 @@ public class ShopController {
 
     @Resource
     public IShopService shopService;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 根据id查询商铺信息
@@ -46,6 +55,13 @@ public class ShopController {
     public Result saveShop(@RequestBody Shop shop) {
         // 写入数据库
         shopService.save(shop);
+        //在写入数据库后，将该店铺信息加载到redis
+        //封装存入redis的数据
+        RedisData redisData = new RedisData();
+        redisData.setData(shop);
+        redisData.setExpireTime(now().plusSeconds(20));
+        //存入redis
+        stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + shop.getId(), JSONUtil.toJsonStr(redisData));
         // 返回店铺id
         return Result.ok(shop.getId());
     }
