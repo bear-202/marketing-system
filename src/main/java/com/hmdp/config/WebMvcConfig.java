@@ -25,7 +25,8 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
                         "/shop-type/**",
                         "/voucher/**",
                         "/upload/**",
-                        "/blog/hot"
+                        "/blog/hot",
+                        "/ai/chat"
                 ).order(1);
         registry.addInterceptor(refreshTokenInterceptor)
                 .addPathPatterns("/**").order(0);

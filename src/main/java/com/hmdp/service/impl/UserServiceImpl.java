@@ -13,6 +13,7 @@ import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RegexUtils;
 import com.hmdp.utils.UserHolder;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,9 @@ import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
+import java.net.http.HttpRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -155,5 +157,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
            num= num>>>1;
         }
         return Result.ok(count);
+    }
+
+    @Override
+    public Result logout(HttpServletRequest request) {
+        // 从请求头获取 token
+        String token = request.getHeader("authorization");
+
+        if (token != null && !token.isEmpty()) {
+            // 删除 Redis 中存储的用户信息
+            stringRedisTemplate.delete(LOGIN_USER_KEY + token);
+            log.info("用户 {} 已退出登录", UserHolder.getUser() != null ? UserHolder.getUser().getNickName() : "unknown");
+        }
+
+        // 清除 ThreadLocal 中的用户数据（虽然拦截器也会清理，但显式清理更安全）
+        UserHolder.removeUser();
+
+        return Result.ok("退出成功");
     }
 }

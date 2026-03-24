@@ -23,7 +23,7 @@ import org.springframework.data.redis.domain.geo.GeoReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -133,12 +133,6 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     public void preSaveShopCacheInRedis(Long id,Long expireSecondsTime){
         //从数据库查询店铺信息
         Shop shop = getById(id);
-        //模拟延迟
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         //封装存入redis的数据
         RedisData redisData = new RedisData();
         redisData.setData(shop);
@@ -246,6 +240,8 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         //删除redis缓存的锁
         stringRedisTemplate.delete(key);
     }
+
+
     @Override
     @Transactional
     public Result update(Shop shop) {
@@ -301,7 +297,6 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             //店铺Id
             String shopId = geoLocationGeoResult.getContent().getName();
             shopIdList.add(Long.valueOf(shopId));
-
             double distance = geoLocationGeoResult.getDistance().getValue();
             shopDistanceList.put(shopId,distance);
         }

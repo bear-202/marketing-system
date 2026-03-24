@@ -1,26 +1,10 @@
 package com.hmdp.interceptor;
-
-import cn.hutool.core.bean.BeanUtil;
-import com.fasterxml.jackson.databind.cfg.HandlerInstantiator;
-import com.hmdp.dto.UserDTO;
-import com.hmdp.entity.User;
 import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import static com.hmdp.utils.RedisConstants.LOGIN_USER_KEY;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 @Slf4j

@@ -12,7 +12,7 @@ import com.hmdp.utils.SystemConstants;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import static com.hmdp.utils.RedisConstants.CACHE_SHOP_KEY;
 import static java.time.LocalDateTime.now;

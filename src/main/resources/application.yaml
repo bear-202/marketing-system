@@ -3,26 +3,46 @@ server:
 spring:
   application:
     name: hmdp
+  ai:
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: qwen-max-latest #对话模型
+      embedding:
+        options:
+          model: text-embedding-v3 #向量模型
+          dimensions: 1024 #向量维度
   datasource:
-    driver-class-name: com.mysql.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/hmdp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
     password: 123456
-  redis:
-    host: 192.168.168.129
-    port: 6379
-    password: 123456
-    timeout: 60000
-    lettuce:
-      pool:
-        max-active: 10
-        max-idle: 10
-        min-idle: 1
-        time-between-eviction-runs: 10s
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
+  data:
+    redis:
+      host: 192.168.150.103
+      port: 6379
+      password: 123456
+      database: 0
+      connect-timeout: 5000
+      timeout: 5000
+  rabbitmq:
+    host: 192.168.150.103
+    port: 5672
+    username: tangwang
+    password: 123321
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: manual
+        concurrency: 1
+        max-concurrency: 1
 mybatis-plus:
   type-aliases-package: com.hmdp.entity # 别名扫描包
 logging:
   level:
     com.hmdp: debug
+    org.springframework.ai: debug

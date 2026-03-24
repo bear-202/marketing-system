@@ -51,8 +51,8 @@ public interface IBlogService extends IService<Blog> {
 
     /**
      * 查询该用户关注列表发布的博客信息
-     * @param max
-     * @param offset
+     * @param max 最大页
+     * @param offset 偏移量（解决博客同一时间问题） 默认为0
      * @return
      */
     Result queryBlogOfFollow(Long max, Integer offset);

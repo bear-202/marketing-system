@@ -29,7 +29,5 @@ end
 redis.call("incrby",stockKey,-1)
 --否,添加该用户id
 redis.call("sadd",orderKey,userId)
---将订单信息添加至stream消息队列,XADD stream.orders * k1 v1 k2 v2
-redis.call("xadd","stream.orders","*","voucherId",voucherId,"userId",userId,"id",orderId)
 --返回0
 return 0

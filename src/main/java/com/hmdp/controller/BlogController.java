@@ -12,16 +12,11 @@ import com.hmdp.utils.SystemConstants;
 import com.hmdp.utils.UserHolder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
- * <p>
- * 前端控制器
- * </p>
- *
- * @author 虎哥
- * @since 2021-12-22
+ * 博客
  */
 @RestController
 @RequestMapping("/blog")
@@ -33,7 +28,6 @@ public class BlogController {
 
     @PostMapping
     public Result saveBlog(@RequestBody Blog blog) {
-
         return blogService.saveBlog(blog);
     }
 
@@ -42,6 +36,11 @@ public class BlogController {
         return blogService.likeBlogById(id);
     }
 
+    /**
+     * 获取到当前用户的博客信息
+     * @param current 当前页数
+     * @return
+     */
     @GetMapping("/of/me")
     public Result queryMyBlog(@RequestParam(value = "current", defaultValue = "1") Integer current) {
         // 获取登录用户

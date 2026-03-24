@@ -3,7 +3,7 @@ package com.hmdp.utils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +19,12 @@ public class RedisIdWorker {
     //初始时间戳(2025.1.1)
     private static final long initTimeStamp=1735689600L;
     private static final int COUNT_MOVE=32;
+
+    /**
+     * 获取唯一ID
+     * @param keyPrefix key前缀
+     * @return
+     */
     public long getOnlyId(String keyPrefix){
         //当前时间戳
         long currentTimeStamp = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);

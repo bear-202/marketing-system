@@ -14,7 +14,7 @@ import com.hmdp.utils.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -40,8 +40,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         //判断是否关注
         Long userId = UserHolder.getUser().getId();
         //查询用户关注关联表，用户是否关注该作者-》count>0则表示关注了该作者
-        Integer count = query().eq("user_id", userId).eq("follow_user_id", followId).count();
-        return Result.ok(count>0);
+        Long count = query().eq("user_id", userId).eq("follow_user_id", followId).count();
+        return Result.ok(count > 0);
     }
 
     @Override

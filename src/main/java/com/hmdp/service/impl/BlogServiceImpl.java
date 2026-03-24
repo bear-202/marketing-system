@@ -1,7 +1,6 @@
 package com.hmdp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
@@ -20,8 +19,7 @@ import com.hmdp.utils.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -158,8 +156,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         }
         //博客id列表最后一个的时间戳
         long minTime=0L;
-        //等同于offset，表示偏移量，特殊情况：当minTime存在多个时，偏移量随之改变
-        int minTimeCount=1;
+        //等同于offset，表示偏移量，特殊情况：当minTime存在多个时，偏移量随之改变 为了避免下一页和上一页相同时间发发布时间的博客冲突
+        int minTimeCount=1;//默认为1
         List<Long> blogIds=new ArrayList<>();
         for (ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
             String value = typedTuple.getValue();
@@ -167,6 +165,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
             blogIds.add(blogId);
             long l = typedTuple.getScore().longValue();
             if(l==minTime){
+                //有相同时间发布的博客 偏移量+1
                 minTimeCount++;
             }else{
                 minTime=l;

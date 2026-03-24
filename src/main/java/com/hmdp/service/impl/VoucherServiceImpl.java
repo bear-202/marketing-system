@@ -11,7 +11,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -33,6 +35,9 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> impl
     public Result queryVoucherOfShop(Long shopId) {
         // 查询优惠券信息
         List<Voucher> vouchers = getBaseMapper().queryVoucherOfShop(shopId);
+        // 过滤掉过期的代金券
+        vouchers.removeIf(voucher -> voucher.getEndTime()==null);
+        vouchers.removeIf(voucher -> voucher.getEndTime().isBefore(LocalDateTime.now()));
         // 返回结果
         return Result.ok(vouchers);
     }
