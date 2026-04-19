@@ -5,7 +5,7 @@ on: #触发器 分支触发名称配置
       - master #推上去的分支
   pull_request:
     branches:
-      - master #拉取的分支
+      - master-close #拉取的分支
 
 jobs:
   build:
@@ -60,17 +60,17 @@ jobs:
         run: java -jar ./libs/openai-code-review-sdk-1.0.jar
         env:
           # Github 环境变量配置
-          GITHUB_REVIEW_LOG_URI: ${{ secrets.CODE_REVIEW_LOG_URI }}
-          GITHUB_TOKEN: ${{ secrets.CODE_TOKEN }}
-          COMMIT_PROJECT: ${{ env.REPO_NAME }}
-          COMMIT_BRANCH: ${{ env.BRANCH_NAME }}
-          COMMIT_AUTHOR: ${{ env.COMMIT_AUTHOR }}
-          COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
-          # 微信 环境变量配置
-          WEIXIN_APPID: ${{ secrets.WEIXIN_APPID }}
-          WEIXIN_SECRET: ${{ secrets.WEIXIN_SECRET }}
-          WEIXIN_TOUSER: ${{ secrets.WEIXIN_TOUSER }}
-          WEIXIN_TEMPLATE_ID: ${{ secrets.WEIXIN_TEMPLATE_ID }}
+          GITHUB_REVIEW_LOG_URI: ${{ secrets.CODE_REVIEW_LOG_URI }} # 日志上传地址
+          GITHUB_TOKEN: ${{ secrets.CODE_TOKEN }} # Github 访问Token
+          COMMIT_PROJECT: ${{ env.REPO_NAME }} # 项目名
+          COMMIT_BRANCH: ${{ env.BRANCH_NAME }} # 分支名
+          COMMIT_AUTHOR: ${{ env.COMMIT_AUTHOR }} # 提交作者
+          COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }} # 提交信息
+          # 微信 环境变量配置 https://open.weixin.qq.com/connect/qrconnect?appid=wx39c379788eb1286a&scope=snsapi_login&redirect_uri=http%3A%2F%2Fmp.weixin.qq.com%2Fdebug%2Fcgi-bin%2Fsandbox%3Ft%3Dsandbox%2Flogin
+          WEIXIN_APPID: ${{ secrets.WEIXIN_APPID }} # 微信 APPID
+          WEIXIN_SECRET: ${{ secrets.WEIXIN_SECRET }} # 微信 SECRET
+          WEIXIN_TOUSER: ${{ secrets.WEIXIN_TOUSER }} # 接收消息的微信用户id
+          WEIXIN_TEMPLATE_ID: ${{ secrets.WEIXIN_TEMPLATE_ID }}  # 微信模板id
           # OpenAi - ChatGLM 环境变量配置「https://open.bigmodel.cn/api/paas/v4/chat/completions」、「https://open.bigmodel.cn/usercenter/apikeys」
-          CHATGLM_APIHOST: ${{ secrets.CHATGLM_APIHOST }}
-          CHATGLM_APIKEYSECRET: ${{ secrets.CHATGLM_APIKEYSECRET }}
+          CHATGLM_APIHOST: ${{ secrets.CHATGLM_APIHOST }} # ChatGLM APIHOST: https://open.bigmodel.cn/api/paas/v4/chat/completions
+          CHATGLM_APIKEYSECRET: ${{ secrets.CHATGLM_APIKEYSECRET }} # ChatGLM APIKEYSECRET: https://open.bigmodel.cn/usercenter/apikeys
