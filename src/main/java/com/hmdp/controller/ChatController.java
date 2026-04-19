@@ -17,6 +17,7 @@ public class ChatController {
     public Flux<String> chat(@RequestParam(value = "prompt",required = false) String prompt){
         //用户id绑定聊天id, 保证一个用户一个会话
         String userId = UserHolder.getUser().getId().toString();
+        System.out.println("1+1=9");
         return shopServiceChatClient.prompt()
                 .user(prompt)
                 .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID,userId))//数据记忆
