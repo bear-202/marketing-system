@@ -80,18 +80,6 @@ class HmDianPingApplicationTests {
      @Test
     void addVoucher(){
 
-         //{
-         //"shopId": 1,
-         //"title": "100元代金券",
-         //"subTitle": "周一至周五均可使用",
-         //"rules": "全场通用\\n无需预约\\n可无限叠加\\不兑现、不找零\\n仅限堂食",
-         //"payValue": 8000,
-         //"actualValue": 10000,
-         //"type": 1,
-         //"stock": 100,
-         //"beginTime": "2022-08-09T10:25:01",
-         //"endTime": "2022-08-10T10:25:01"
-         //}
          final Voucher voucher = new Voucher().setShopId(1L)
                  .setTitle("200元代金券")
                  .setSubTitle("周一至周五均可使用")
